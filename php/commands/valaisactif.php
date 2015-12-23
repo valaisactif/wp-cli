@@ -11,21 +11,63 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
         $xpath = new \DOMXpath($document);
         $xpath->registerNamespace('g', 'http://www.guidle.com');
         $offers = $xpath->query('//g:offer');
+        $query = function ($exp, $offer) use ($xpath) {
+            return $xpath->query($exp, $offer)->item(0)->nodeValue;
+        };
 
         /** @var DOMNodeList $offer */
         foreach ($offers as $k => $offer) {
             $externalId = $xpath->query('./@id', $offer)->item(0)->nodeValue;
-            $title = $xpath->query('.//g:offerDetail[@languageCode="fr"]/g:title', $offer)->item(0)->nodeValue;
 
             $post = [
-                'post_title' => $title,
+                'post_title' => $query('.//g:offerDetail[@languageCode="fr"]/g:title', $offer),
+                'post_content' => $query('.//g:offerDetail[@languageCode="fr"]/g:longDescription', $offer),
                 'post_type' => 'event',
-                'event_start_date' => '2016-01-01 00:00:00',
+                'post_status' => 'publish',
+                'post_name' => '',
+                'cmb_nonce' => '',
+                'eventStatsCrowd' => '',
+                'eventStatsInvolvement' => '',
+                'eventStatsPreparation' => '',
+                'eventStatsTransformation' => '',
+                'item_facebook' => '',
+                'item_foursquare' => '',
+                'item_skype' => '',
+                'item_googleplus' => '',
+                'item_twitter' => '',
+                'item_dribbble' => '',
+                'item_behance' => '',
+                'item_linkedin' => '',
+                'item_pinterest' => '',
+                'item_tumblr' => '',
+                'item_youtube' => '',
+                'item_delicious' => '',
+                'item_medium' => '',
+                'item_soundcloud' => '',
+                'item_video' => '',
+                'event_location' => '',
+                'event_start_date' => '',
+                'event_start_time' => '',
+                'event_end_date' => '',
+                'event_end_time' => '',
+                'event_address_country' => '',
+                'event_address_state' => '',
+                'event_address_city' => '',
+                'event_address_address' => '',
+                'event_address_zip' => '',
+                'event_phone' => '',
+                'event_email' => '',
+                'event_website' => '',
+                'event_address_latitude' => '',
+                'event_address_longitude' => '',
+                'event_address_streetview' => '',
+                'event_googleaddress' => '',
+                'item_ticketailor' => '',
             ];
 
             $post = $this->updatePost($post, $externalId);
 
-            echo sprintf("%s. post %s : %s (%s) %s \n", $k + 1, $post['ID'], $title, $externalId, $post['added'] ? 'NEW' : '');
+            echo sprintf("%s. post %s : %s (%s) %s \n", $k + 1, $post['ID'], $post['post_title'], $externalId, $post['added'] ? 'NEW' : '');
         }
     }
 
@@ -36,7 +78,7 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
             'meta_value' => $externalId,
             'post_type' => 'event',
             'post_status' => 'any',
-            'posts_per_page' => 1
+            'posts_per_page' => 1,
         ));
 
         return $posts ? $posts[0]->ID : false;
