@@ -2,7 +2,7 @@
 
 class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
 {
-    public function sync()
+    private function _sync($url)
     {
         error_reporting(E_ERROR | E_PARSE);
 
@@ -20,54 +20,66 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
             $externalId = $xpath->query('./@id', $offer)->item(0)->nodeValue;
 
             $post = [
+                'ID' => $this->getPostIdByExternalId($externalId),
                 'post_title' => $query('.//g:offerDetail[@languageCode="fr"]/g:title', $offer),
                 'post_content' => $query('.//g:offerDetail[@languageCode="fr"]/g:longDescription', $offer),
                 'post_type' => 'event',
                 'post_status' => 'publish',
-                'post_name' => '',
-                'cmb_nonce' => '',
-                'eventStatsCrowd' => '',
-                'eventStatsInvolvement' => '',
-                'eventStatsPreparation' => '',
-                'eventStatsTransformation' => '',
-                'item_facebook' => '',
-                'item_foursquare' => '',
-                'item_skype' => '',
-                'item_googleplus' => '',
-                'item_twitter' => '',
-                'item_dribbble' => '',
-                'item_behance' => '',
-                'item_linkedin' => '',
-                'item_pinterest' => '',
-                'item_tumblr' => '',
-                'item_youtube' => '',
-                'item_delicious' => '',
-                'item_medium' => '',
-                'item_soundcloud' => '',
-                'item_video' => '',
-                'event_location' => '',
-                'event_start_date' => '',
-                'event_start_time' => '',
-                'event_end_date' => '',
-                'event_end_time' => '',
-                'event_address_country' => '',
-                'event_address_state' => '',
-                'event_address_city' => '',
-                'event_address_address' => '',
-                'event_address_zip' => '',
-                'event_phone' => '',
-                'event_email' => '',
-                'event_website' => '',
-                'event_address_latitude' => '',
-                'event_address_longitude' => '',
-                'event_address_streetview' => '',
-                'event_googleaddress' => '',
-                'item_ticketailor' => '',
+                'cmb_nonce' => '', // no matching
+                'eventStatsCrowd' => '', // no matching
+                'eventStatsInvolvement' => '', // no matching
+                'eventStatsPreparation' => '', // no matching
+                'eventStatsTransformation' => '', // no matching
+                'item_facebook' => '', // no matching
+                'item_foursquare' => '', // no matching
+                'item_skype' => '', // no matching
+                'item_googleplus' => '', // no matching
+                'item_twitter' => '', // no matching
+                'item_dribbble' => '', // no matching
+                'item_behance' => '', // no matching
+                'item_linkedin' => '', // no matching
+                'item_pinterest' => '', // no matching
+                'item_tumblr' => '', // no matching
+                'item_youtube' => '', // no matching
+                'item_delicious' => '', // no matching
+                'item_medium' => '', // no matching
+                'item_soundcloud' => '', // no matching
+                'item_video' => '', // no matching
+                'event_location' => '', // no matching
+                'event_start_date' => $query('.//g:schedules//g:startDate', $offer),
+                'event_start_time' => $query('.//g:schedules//g:startTime', $offer),
+                'event_end_date' => $query('.//g:schedules//g:endDate', $offer),
+                'event_end_time' => $query('.//g:schedules//g:endTime', $offer),
+                'event_address_country' => $query('.//g:address/g:country', $offer),
+                'event_address_state' => 'Valais',
+                'event_address_city' => $query('.//g:address/g:city', $offer),
+                'event_address_address' => $query('.//g:address/g:street', $offer),
+                'event_address_zip' => $query('.//g:address/g:zip', $offer),
+                'event_phone' => $query('.//g:contact//g:telephone_1', $offer),
+                'event_email' => $query('.//g:contact//g:email', $offer),
+                'event_website' => $query('.//g:offerDetail[@languageCode="fr"]/g:homepage', $offer),
+                'event_address_latitude' => $query('.//g:address/g:latitude', $offer),
+                'event_address_longitude' => $query('.//g:address/g:longitude', $offer),
+                'event_address_streetview' => '', // no matching
+                'event_googleaddress' => '', // no matching
+                'item_ticketailor' => '', // no matching
             ];
 
             $post = $this->updatePost($post, $externalId);
 
             echo sprintf("%s. post %s : %s (%s) %s \n", $k + 1, $post['ID'], $post['post_title'], $externalId, $post['added'] ? 'NEW' : '');
+            ob_flush();
+        }
+    }
+
+    public function sync()
+    {
+        $urls = array(
+            'http://www.guidle.com/m_jKCxcD/Verbier-St-Bernard/%C3%89v%C3%A9nements/',
+        );
+
+        foreach ($urls as $url) {
+            $this->_sync($url);
         }
     }
 
@@ -89,13 +101,17 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
         $post['added'] = false;
         $_POST = &$post;
 
-        if ($post['ID'] = $this->getPostIdByExternalId($externalId)) {
+        if ($post['ID']) {
             wp_update_post($post);
         } else {
             $post['added'] = true;
             $post['ID'] = wp_insert_post($post);
             update_post_meta($post['ID'], 'external_id', $externalId);
         }
+
+        // Update post_name
+        $post['post_name'] = wp_unique_post_slug($post['post_title'], $post['ID'], $post['post_status'], $post['post_type'], $post['post_parent']);
+        wp_update_post($post);
 
         return $post;
     }
