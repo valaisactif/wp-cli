@@ -4,10 +4,8 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
 {
     private function _sync($url)
     {
-        error_reporting(E_ERROR | E_PARSE);
-
         $document = new \DomDocument();
-        $document->load('http://www.guidle.com/m_jKCxcD/Verbier-St-Bernard/%C3%89v%C3%A9nements/');
+        $document->load($url);
         $xpath = new \DOMXpath($document);
         $xpath->registerNamespace('g', 'http://www.guidle.com');
         $offers = $xpath->query('//g:offer');
@@ -74,13 +72,18 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
 
     public function sync()
     {
+        echo "start valaisactif sync\n";
+
         $urls = array(
             'http://www.guidle.com/m_jKCxcD/Verbier-St-Bernard/%C3%89v%C3%A9nements/',
+            'http://www.guidle.com/m_LwXSxr/Martigny/Veranstaltungen/',
         );
 
         foreach ($urls as $url) {
             $this->_sync($url);
         }
+
+        echo "end valaisactif sync\n";
     }
 
     private function getPostIdByExternalId($externalId)
