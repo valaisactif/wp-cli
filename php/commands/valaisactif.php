@@ -64,12 +64,16 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
             ];
 
             $post = $this->updatePost($post, $externalId);
+            echo sprintf("%s. post %s : %s (%s) %s \n", $k + 1, $post['ID'], $post['post_title'], $externalId, $post['added'] ? 'NEW' : '');
 
             // Add image
-            $image = $query('.//g:images//g:size[@label="original"]/@url', $offer);
-            $this->addImage($image, $post['ID']);
+            if (!get_post_thumbnail_id($post['ID'])) {
+                if ($image = $query('.//g:images//g:size[@label="original"]/@url', $offer)) {
+                    $this->addImage($image, $post['ID']);
+                    echo sprintf("%s. thumbnail %s added\n", $k + 1, $image);
+                }
+            }
 
-            echo sprintf("%s. post %s : %s (%s) %s \n", $k + 1, $post['ID'], $post['post_title'], $externalId, $post['added'] ? 'NEW' : '');
             ob_flush();
         }
     }
