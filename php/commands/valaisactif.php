@@ -65,6 +65,10 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
 
             $post = $this->updatePost($post, $externalId);
 
+            // Add image
+            $image = $query('.//g:images//g:size[@label="original"]/@url', $offer);
+            $this->addImage($image, $post['ID']);
+
             echo sprintf("%s. post %s : %s (%s) %s \n", $k + 1, $post['ID'], $post['post_title'], $externalId, $post['added'] ? 'NEW' : '');
             ob_flush();
         }
@@ -75,8 +79,8 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
         echo "start valaisactif sync\n";
 
         $urls = array(
-            'http://www.guidle.com/m_jKCxcD/Verbier-St-Bernard/%C3%89v%C3%A9nements/',
-            'http://www.guidle.com/m_LwXSxr/Martigny/Veranstaltungen/',
+            'http://www.guidle.com/m_KEkW3V/Valais-Actif/Events/',
+            'http://www.guidle.com/m_MRqNmV/Valais-Actif/Ausflugsvorschl%C3%A4ge/',
         );
 
         foreach ($urls as $url) {
@@ -117,6 +121,31 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
         wp_update_post($post);
 
         return $post;
+    }
+
+    private function addImage($imageUrl, $postId)
+    {
+        $upload_dir = wp_upload_dir();
+        $imageData = file_get_contents($imageUrl);
+        $filename = basename($imageUrl);
+        $file = wp_mkdir_p($upload_dir['path'])
+            ? $upload_dir['path'].'/'.$filename
+            : $upload_dir['basedir'].'/'.$filename
+        ;
+        file_put_contents($file, $imageData);
+
+        $wp_filetype = wp_check_filetype($filename, null);
+        $attachment = array(
+            'post_mime_type' => $wp_filetype['type'],
+            'post_title' => sanitize_file_name($filename),
+            'post_content' => '',
+            'post_status' => 'inherit',
+        );
+        $attachId = wp_insert_attachment($attachment, $file, $postId);
+        require_once(ABSPATH.'wp-admin/includes/image.php');
+        $attachData = wp_generate_attachment_metadata($attachId, $file);
+        wp_update_attachment_metadata($attachId, $attachData);
+        set_post_thumbnail($postId, $attachId);
     }
 }
 
