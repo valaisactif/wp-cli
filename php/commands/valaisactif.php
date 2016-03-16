@@ -58,7 +58,7 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
                 'event_website' => $query('.//g:offerDetail[@languageCode="fr"]/g:homepage', $offer),
                 'event_address_latitude' => $query('.//g:address/g:latitude', $offer),
                 'event_address_longitude' => $query('.//g:address/g:longitude', $offer),
-                'event_address_streetview' => '', // no matching
+                'event_address_streetview' => 'enabled-streetview',
                 'event_googleaddress' => '', // no matching
                 'item_ticketailor' => '', // no matching
             ];
