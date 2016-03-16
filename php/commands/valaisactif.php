@@ -45,9 +45,9 @@ class ValaisActif_Command extends \WP_CLI\CommandWithDBObject
                 'item_video' => '', // no matching
                 'event_location' => '', // no matching
                 'event_start_date' => $query('.//g:schedules//g:startDate', $offer),
-                'event_start_time' => $query('.//g:schedules//g:startTime', $offer),
+                'event_start_time' => $query('.//g:schedules//g:startTime', $offer) ?: '00:00:00',
                 'event_end_date' => $query('.//g:schedules//g:endDate', $offer),
-                'event_end_time' => $query('.//g:schedules//g:endTime', $offer),
+                'event_end_time' => $query('.//g:schedules//g:endTime', $offer) ?: '23:59:59',
                 'event_address_country' => $query('.//g:address/g:country', $offer),
                 'event_address_state' => 'Valais',
                 'event_address_city' => $query('.//g:address/g:city', $offer),
